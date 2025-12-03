@@ -1,23 +1,23 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from './AuthContext';
-import { MessageWithUser, RoomWithDetails, FriendWithStatus, MessageStatus } from '@shared/schema';
+import { MessageWithUser, RoomWithDetails, MentorshipConnection, MessageStatus } from '@shared/schema';
 
 interface ChatContextType {
   activeRoom: RoomWithDetails | null;
   setActiveRoom: (room: RoomWithDetails | null) => void;
   messages: MessageWithUser[];
   rooms: RoomWithDetails[];
-  friends: FriendWithStatus[];
-  friendsLoading: boolean;
+  mentorshipConnections: MentorshipConnection[];
+  mentorshipsLoading: boolean;
   onlineUsers: Set<string>;
   typingUsers: Map<string, string[]>;
   sendMessage: (roomId: string, content: string, replyTo?: string) => Promise<void>;
   sendTyping: (isTyping: boolean) => void;
   refreshRooms: () => void;
-  refreshFriends: () => void;
+  refreshMentorships: () => void;
   markAsRead: (roomId: string) => void;
-  createDirectMessage: (friendId: string) => Promise<RoomWithDetails | null>;
+  createMentorshipSession: (mentorId: string) => Promise<RoomWithDetails | null>;
 }
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
@@ -45,9 +45,9 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     });
   }, [messages]);
   const [rooms, setRooms] = useState<RoomWithDetails[]>([]);
-  const [friends, setFriends] = useState<FriendWithStatus[]>([]);
-  const [friendsLoading, setFriendsLoading] = useState(true);
-  const [friendsInitialLoad, setFriendsInitialLoad] = useState(true);
+  const [mentorshipConnections, setMentorshipConnections] = useState<MentorshipConnection[]>([]);
+  const [mentorshipsLoading, setMentorshipsLoading] = useState(true);
+  const [mentorshipsInitialLoad, setMentorshipsInitialLoad] = useState(true);
   const [onlineUsers, setOnlineUsers] = useState<Set<string>>(new Set());
   const [typingUsers, setTypingUsers] = useState<Map<string, string[]>>(new Map());
 
@@ -893,12 +893,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const refreshFriends = async () => {
+  const refreshMentorships = async () => {
     if (!user) return;
 
     // Only show loading state on initial load
-    if (friendsInitialLoad) {
-      setFriendsLoading(true);
+    if (mentorshipsInitialLoad) {
+      setMentorshipsLoading(true);
     }
 
     try {
@@ -910,17 +910,17 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       });
 
       if (response.ok) {
-        const friends = await response.json();
-        setFriends(friends);
+        const mentors = await response.json();
+        setMentorshipConnections(mentors);
       }
     } catch (error) {
-      console.error('Error refreshing friends:', error);
+      console.error('Error refreshing mentorship connections:', error);
     } finally {
-      if (friendsInitialLoad) {
+      if (mentorshipsInitialLoad) {
         // Add minimum loading time of 2 seconds only on initial load
         setTimeout(() => {
-          setFriendsLoading(false);
-          setFriendsInitialLoad(false);
+          setMentorshipsLoading(false);
+          setMentorshipsInitialLoad(false);
         }, 2000);
       }
     }
@@ -932,7 +932,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     console.log(`Marking room ${roomId} as read`);
   };
 
-  const createDirectMessage = async (friendId: string): Promise<RoomWithDetails | null> => {
+  const createMentorshipSession = async (mentorId: string): Promise<RoomWithDetails | null> => {
     if (!user) {
       console.error('[CREATE DM DEBUG] No user found');
       return null;
@@ -940,7 +940,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
 
     console.log('[CREATE DM DEBUG] Starting direct message creation:', {
       userId: user.id,
-      friendId,
+      mentorId,
       currentRooms: rooms.length,
       roomIds: rooms.map(r => ({ id: r.id, type: r.type, memberCount: r.members?.length }))
     });
@@ -957,13 +957,13 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           memberCount: room.members?.length,
           members: room.members?.map(m => ({ id: m.id, username: m.username })),
           hasCurrentUser: room.members?.some(member => member.id === user.id),
-          hasFriend: room.members?.some(member => member.id === friendId)
+          hasFriend: room.members?.some(member => member.id === mentorId)
         });
 
         // Check if this is a direct room with exactly 2 members including both users
         const isDirectRoom = room.type === 'direct' || (room.is_private && room.members?.length === 2);
         const hasCurrentUser = room.members?.some(member => member.id === user.id);
-        const hasFriend = room.members?.some(member => member.id === friendId);
+        const hasFriend = room.members?.some(member => member.id === mentorId);
 
         if (isDirectRoom && hasCurrentUser && hasFriend) {
           console.log('[CREATE DM DEBUG] Existing DM room found:', {
@@ -988,7 +988,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
           'Authorization': `Bearer ${session.data.session?.access_token}`,
         },
         body: JSON.stringify({
-          friend_id: friendId,
+          friend_id: mentorId,
         }),
       });
 
@@ -1028,7 +1028,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
       console.error('[CREATE DM DEBUG] Error creating direct message:', {
         error: error.message,
         stack: error.stack,
-        friendId,
+        friendId: mentorId,
         userId: user.id
       });
       throw error;
@@ -1039,7 +1039,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (user) {
       refreshRooms();
-      refreshFriends();
+      refreshMentorships();
     }
   }, [user]);
 
@@ -1048,16 +1048,16 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     setActiveRoom,
     messages,
     rooms,
-    friends,
-    friendsLoading,
+    mentorshipConnections,
+    mentorshipsLoading,
     onlineUsers,
     typingUsers,
     sendMessage,
     sendTyping,
     refreshRooms,
-    refreshFriends,
+    refreshMentorships,
     markAsRead,
-    createDirectMessage,
+    createMentorshipSession,
   };
 
   return (

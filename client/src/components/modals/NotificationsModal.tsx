@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { LoadingSpinner } from '@/components/ui/loading-spinner';
 import { Bell, Check, X, UserPlus } from 'lucide-react';
 
-interface FriendRequest {
+interface MentorshipRequest {
   id: string;
   is_sender: boolean;
   status: 'pending' | 'accepted' | 'rejected';
@@ -42,20 +42,20 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { refreshFriends } = useChat();
+  const { refreshMentorships } = useChat();
 
-  // Fetch friend requests
-  const { data: friendRequests = [], isLoading } = useQuery<FriendRequest[]>({
+  // Fetch mentorship requests
+  const { data: mentorshipRequests = [], isLoading } = useQuery<MentorshipRequest[]>({
     queryKey: ['/api/friend-requests'],
     queryFn: () => {
-      console.log('[NOTIFICATIONS DEBUG] Fetching friend requests...');
+      console.log('[NOTIFICATIONS DEBUG] Fetching mentorship requests...');
       return apiRequest('/api/friend-requests');
     },
     refetchInterval: 10000, // Refresh every 10 seconds
     enabled: open, // Only fetch when modal is open
   });
 
-  // Accept friend request mutation
+  // Accept mentorship request mutation
   const acceptFriendRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
       const session = await supabase.auth.getSession();
@@ -77,22 +77,22 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/friend-requests'] });
-      refreshFriends();
+      refreshMentorships();
       toast({
-        title: 'Friend request accepted',
-        description: 'You are now friends!',
+        title: 'Mentorship request accepted',
+        description: 'Mentorship unlocked. Continue the session in your dashboard.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to accept friend request',
+        description: error.message || 'Failed to accept mentorship request',
         variant: 'destructive',
       });
     },
   });
 
-  // Reject friend request mutation
+  // Reject mentorship request mutation
   const rejectFriendRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
       const session = await supabase.auth.getSession();
@@ -115,14 +115,14 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/friend-requests'] });
       toast({
-        title: 'Friend request rejected',
-        description: 'Friend request has been declined.',
+        title: 'Mentorship request rejected',
+        description: 'Mentorship request has been declined.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to reject friend request',
+        description: error.message || 'Failed to reject mentorship request',
         variant: 'destructive',
       });
     },
@@ -137,10 +137,10 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
   };
 
   // Filter to only show incoming requests (where user is NOT the sender)
-  const incomingRequests = friendRequests.filter(req => !req.is_sender && req.status === 'pending');
+  const incomingRequests = mentorshipRequests.filter(req => !req.is_sender && req.status === 'pending');
 
   console.log('[NOTIFICATIONS DEBUG] Incoming requests:', {
-    total: friendRequests.length,
+    total: mentorshipRequests.length,
     incoming: incomingRequests.length,
     requests: incomingRequests.map(req => ({
       id: req.id,
@@ -177,7 +177,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
                 <div className="space-y-3">
                   <h4 className="font-medium text-foreground flex items-center gap-2">
                     <UserPlus className="w-4 h-4" />
-                    Friend Requests ({incomingRequests.length})
+                    Mentorship Requests ({incomingRequests.length})
                   </h4>
                   {incomingRequests.map((request) => (
                     <div 
@@ -189,7 +189,7 @@ export function NotificationsModal({ open, onOpenChange }: NotificationsModalPro
                         <div>
                           <p className="font-medium text-foreground">{request.user.full_name}</p>
                           <p className="text-xs text-muted-foreground">
-                            @{request.user.username} • Wants to be friends
+                            Mentorship request
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {new Date(request.created_at).toLocaleDateString()}

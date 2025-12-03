@@ -7,7 +7,7 @@ import { useRealtime } from "@/hooks/use-realtime";
 import { apiRequest } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { MessageWithUser, RoomWithDetails } from "@shared/schema";
+import { MentorshipConnection, MessageWithUser, RoomWithDetails } from "@shared/schema";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -49,7 +49,7 @@ import {
   Compass,
 } from "lucide-react";
 
-import { AddFriendModal } from "@/components/modals/AddFriendModal";
+import { RequestMentorshipModal } from "@/components/modals/RequestMentorshipModal";
 import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { CreateGroupModal } from "@/components/modals/CreateGroupModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
@@ -67,16 +67,6 @@ interface FriendRequest {
     email: string;
     avatar_url: string | null;
   };
-}
-
-interface FriendWithStatus {
-  id: string;
-  username: string;
-  full_name: string;
-  email: string;
-  avatar_url: string | null;
-  is_online?: boolean;
-  last_seen?: string;
 }
 
 type MentorProfile = {
@@ -171,17 +161,17 @@ export default function Chat() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const {
-    friends,
-    friendsLoading,
+    mentorshipConnections,
+    mentorshipsLoading,
     rooms,
     messages,
     activeRoom,
     setActiveRoom,
-    refreshFriends,
+    refreshMentorships,
     refreshRooms,
     sendMessage: sendChatMessage,
     markAsRead,
-    createDirectMessage,
+    createMentorshipSession,
   } = useChat();
 
   const { typingUsers } = useRealtime();
@@ -192,7 +182,7 @@ export default function Chat() {
   const [unreadCount, setUnreadCount] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  const [showAddFriend, setShowAddFriend] = useState(false);
+  const [showRequestMentorship, setShowRequestMentorship] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showCreateGroup, setShowCreateGroup] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -200,35 +190,35 @@ export default function Chat() {
 
   const lastSentTextRef = useRef<string>("");
 
-  // Fetch friend requests
-  const { data: friendRequests = [] } = useQuery<FriendRequest[]>({
+  // Fetch mentorship requests
+  const { data: mentorshipRequests = [] } = useQuery<FriendRequest[]>({
     queryKey: ["/api/friend-requests"],
     queryFn: () => {
-      console.log("[CHAT DEBUG] Fetching friend requests...");
+      console.log("[CHAT DEBUG] Fetching mentorship requests...");
       return apiRequest("/api/friend-requests");
     },
     refetchInterval: 30000,
   });
 
-  // Log friend requests when data changes
+  // Log mentorship requests when data changes
   useEffect(() => {
-    if (friendRequests) {
-      console.log("[CHAT DEBUG] Friend requests received:", {
-        total: friendRequests?.length || 0,
+    if (mentorshipRequests) {
+      console.log("[CHAT DEBUG] Mentorship requests received:", {
+        total: mentorshipRequests?.length || 0,
         pending:
-          friendRequests?.filter(
+          mentorshipRequests?.filter(
             (req: FriendRequest) => !req.is_sender && req.status === "pending",
           ).length || 0,
         sent:
-          friendRequests?.filter(
+          mentorshipRequests?.filter(
             (req: FriendRequest) => req.is_sender && req.status === "pending",
           ).length || 0,
-        data: friendRequests,
+        data: mentorshipRequests,
       });
     }
-  }, [friendRequests]);
+  }, [mentorshipRequests]);
 
-  // Friend request mutations
+  // Mentorship request mutations
   const acceptFriendRequestMutation = useMutation({
     mutationFn: async (requestId: string) => {
       if (!supabase) throw new Error("Supabase not available");
@@ -251,10 +241,10 @@ export default function Chat() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests"] });
-      refreshFriends();
+      refreshMentorships();
       toast({
-        title: "Friend request accepted",
-        description: "You are now friends!",
+        title: "Mentorship request accepted",
+        description: "Mentorship unlocked. Continue your session.",
       });
     },
   });
@@ -282,7 +272,7 @@ export default function Chat() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/friend-requests"] });
       toast({
-        title: "Friend request rejected",
+        title: "Mentorship request rejected",
       });
     },
   });
@@ -294,8 +284,10 @@ export default function Chat() {
 
   const typingUsersData = currentRoomTypingUsers
     .filter((userId: string) => userId !== user?.id)
-    .map((userId: string) => friends.find((friend) => friend.id === userId))
-    .filter(Boolean) as FriendWithStatus[];
+    .map((userId: string) =>
+      mentorshipConnections.find((mentor) => mentor.id === userId),
+    )
+    .filter(Boolean) as MentorshipConnection[];
 
   useEffect(() => {
     if (messages.length > 0) {
@@ -404,11 +396,11 @@ export default function Chat() {
     }
   };
 
-  const handleStartChat = async (friendId: string) => {
-    setCreatingChat(friendId);
+  const handleStartChat = async (mentorId: string) => {
+    setCreatingChat(mentorId);
     try {
       console.log("[CHAT START DEBUG] ===== STARTING CHAT =====");
-      console.log("[CHAT START DEBUG] Starting chat with friend:", friendId);
+      console.log("[CHAT START DEBUG] Starting chat with mentor:", mentorId);
       console.log("[CHAT START DEBUG] Current user:", user?.id);
       console.log("[CHAT START DEBUG] Total rooms loaded:", rooms.length);
       console.log(
@@ -459,7 +451,7 @@ export default function Chat() {
           room.type === "direct" ||
           (room.is_private && room.members?.length === 2);
         const hasFriend = room.members?.some(
-          (member) => member.id === friendId,
+          (member) => member.id === mentorId,
         );
         const hasCurrentUser = room.members?.some(
           (member) => member.id === user?.id,
@@ -490,7 +482,7 @@ export default function Chat() {
           markAsRead(existingRoom.id);
         }
         toast({
-          title: "Chat opened",
+          title: "Mentorship session opened",
           description: "Existing conversation loaded!",
         });
         return;
@@ -500,7 +492,7 @@ export default function Chat() {
         "[CHAT START DEBUG] No existing room found, creating new one",
       );
       // Create new room if none exists
-      const room = await createDirectMessage(friendId);
+      const room = await createMentorshipSession(mentorId);
       if (room) {
         console.log("[CHAT START DEBUG] New room created successfully:", {
           roomId: room.id,
@@ -508,8 +500,8 @@ export default function Chat() {
         });
         setActiveRoom(room);
         toast({
-          title: "Chat started",
-          description: "You can now start messaging!",
+          title: "Mentorship in progress",
+          description: "You can now continue your session messages!",
         });
       } else {
         console.error(
@@ -521,7 +513,7 @@ export default function Chat() {
       console.error("[CHAT START DEBUG] Error starting chat:", {
         error: error.message,
         stack: error.stack,
-        friendId,
+        friendId: mentorId,
         userId: user?.id,
       });
       toast({
@@ -604,14 +596,14 @@ export default function Chat() {
     });
   };
 
-  const pendingRequests = (friendRequests || []).filter(
+  const pendingRequests = (mentorshipRequests || []).filter(
     (req: FriendRequest) => !req.is_sender && req.status === "pending",
   );
 
   console.log("[CHAT DEBUG] Pending requests calculation:", {
-    totalRequests: (friendRequests || []).length,
+    totalRequests: (mentorshipRequests || []).length,
     pendingReceived: pendingRequests.length,
-    allRequests: (friendRequests || []).map((req: FriendRequest) => ({
+    allRequests: (mentorshipRequests || []).map((req: FriendRequest) => ({
       id: req.id,
       is_sender: req.is_sender,
       status: req.status,
@@ -650,8 +642,8 @@ export default function Chat() {
               </Card>
               <Card className="min-w-[160px] border-border/70 shadow-sm">
                 <CardContent className="p-4">
-                  <p className="text-xs text-muted-foreground">Connections</p>
-                  <p className="text-2xl font-semibold">{friends.length}</p>
+                  <p className="text-xs text-muted-foreground">Mentorships</p>
+                  <p className="text-2xl font-semibold">{mentorshipConnections.length}</p>
                 </CardContent>
               </Card>
             </div>
@@ -670,7 +662,7 @@ export default function Chat() {
                 <div>
                   <p className="font-medium text-foreground">{user.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    Student • @{user.username}
+                    Student • Mentorship track
                   </p>
                 </div>
               </div>
@@ -706,11 +698,11 @@ export default function Chat() {
             <Tabs defaultValue="rooms" className="flex-1 flex flex-col">
               <TabsList className="grid w-full grid-cols-2 m-3 rounded-xl bg-card/80">
                 <TabsTrigger
-                  value="friends"
+                  value="mentors"
                   className="flex items-center gap-2"
                 >
                   <Users className="w-4 h-4" />
-                  Network
+                  Mentor Network
                   {pendingRequests.length > 0 && (
                     <Badge
                       variant="destructive"
@@ -739,7 +731,7 @@ export default function Chat() {
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="friends" className="flex-1 mt-0">
+              <TabsContent value="mentors" className="flex-1 mt-0">
                 <ScrollArea className="h-full">
                   <div className="p-4">
                     {/* Header Actions */}
@@ -756,11 +748,11 @@ export default function Chat() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => setShowAddFriend(true)}
-                          data-testid="button-add-friend"
+                          onClick={() => setShowRequestMentorship(true)}
+                          data-testid="button-request-mentorship"
                         >
                           <UserPlus className="w-4 h-4 mr-2" />
-                          Invite mentor
+                          Request mentorship
                         </Button>
                         <Button
                           variant="outline"
@@ -774,7 +766,7 @@ export default function Chat() {
                       </div>
                     </div>
 
-                    {/* Friend Requests Section */}
+                    {/* Mentorship Requests Section */}
                     {pendingRequests.length > 0 && (
                       <div className="mb-6">
                         <h5 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
@@ -794,7 +786,7 @@ export default function Chat() {
                                     {request.user.full_name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    @{request.user.username} • Wants to mentor
+                                    Mentorship invitation
                                   </p>
                                 </div>
                               </div>
@@ -841,15 +833,15 @@ export default function Chat() {
                     )}
 
                     {/* Sent Requests Section */}
-                    {(friendRequests || []).some(
+                    {(mentorshipRequests || []).some(
                       (req: FriendRequest) => req.is_sender,
                     ) && (
                       <div className="mb-6">
                         <h5 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                           <Send className="w-4 h-4" />
-                          Sent Requests (
+                          Sent Mentorship Requests (
                           {
-                            (friendRequests || []).filter(
+                            (mentorshipRequests || []).filter(
                               (req: FriendRequest) => req.is_sender,
                             ).length
                           }
@@ -857,7 +849,7 @@ export default function Chat() {
                         </h5>
                         <div className="space-y-2">
                           {/* Sent Requests */}
-                          {(friendRequests || [])
+                          {(mentorshipRequests || [])
                             .filter((req: FriendRequest) => req.is_sender)
                             .map((request: FriendRequest) => (
                               <div
@@ -884,49 +876,48 @@ export default function Chat() {
                       </div>
                     )}
 
-                    {/* Current Friends */}
-                    {friendsLoading ? (
+                    {/* Current Mentors */}
+                    {mentorshipsLoading ? (
                       <div className="flex flex-col items-center justify-center py-8 text-center">
                         <LoadingSpinner size="lg" />
                         <p className="text-muted-foreground mt-4">
-                          Loading your contacts...
+                          Loading your mentorship connections...
                         </p>
                       </div>
-                    ) : friends.length > 0 ? (
+                    ) : mentorshipConnections.length > 0 ? (
                       <div>
                         <h5 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                           <Users className="w-4 h-4" />
-                          Your Contacts ({friends.length})
+                          Your Mentorship Network ({mentorshipConnections.length})
                         </h5>
-
-                        {/* Online Friends */}
+                        {/* Online mentors */}
                         <div className="mb-4">
                           <h6 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                             Online
                           </h6>
                           <div className="space-y-1">
-                            {friends
-                              .filter((friend) => friend.is_online)
-                              .map((friend) => (
+                            {mentorshipConnections
+                              .filter((mentor) => mentor.is_online)
+                              .map((mentor) => (
                                 <div
-                                  key={friend.id}
+                                  key={mentor.id}
                                   className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                                 >
                                   <div
                                     className="flex items-center space-x-3 flex-1 cursor-pointer"
-                                    onClick={() => handleStartChat(friend.id)}
+                                    onClick={() => handleStartChat(mentor.id)}
                                   >
                                     <UserAvatar
-                                      user={friend}
+                                      user={mentor}
                                       size="sm"
                                       showOnline
                                     />
                                     <div>
                                       <p className="font-medium text-foreground">
-                                        {friend.full_name}
+                                        {mentor.full_name}
                                       </p>
                                       <p className="text-xs text-green-600 dark:text-green-400">
-                                        @{friend.username} • Online
+                                        Online now
                                       </p>
                                     </div>
                                   </div>
@@ -934,11 +925,11 @@ export default function Chat() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      onClick={() => handleStartChat(friend.id)}
-                                      disabled={creatingChat === friend.id}
-                                      data-testid={`button-chat-${friend.id}`}
+                                      onClick={() => handleStartChat(mentor.id)}
+                                      disabled={creatingChat === mentor.id}
+                                      data-testid={`button-chat-${mentor.id}`}
                                     >
-                                      {creatingChat === friend.id ? (
+                                      {creatingChat === mentor.id ? (
                                         <LoadingSpinner size="sm" />
                                       ) : (
                                         <MessageSquare className="w-4 h-4" />
@@ -953,19 +944,19 @@ export default function Chat() {
                                       <DropdownMenuContent align="end">
                                         <DropdownMenuItem
                                           onClick={() =>
-                                            handleStartChat(friend.id)
+                                            handleStartChat(mentor.id)
                                           }
                                         >
                                           <MessageSquare className="w-4 h-4 mr-2" />
-                                          Send Message
+                                          Continue session
                                         </DropdownMenuItem>
                                         <DropdownMenuItem>
                                           <Users className="w-4 h-4 mr-2" />
-                                          View Profile
+                                          View Mentor Profile
                                         </DropdownMenuItem>
                                         <DropdownMenuItem className="text-red-600">
                                           <X className="w-4 h-4 mr-2" />
-                                          Remove Friend
+                                          Remove Connection
                                         </DropdownMenuItem>
                                       </DropdownMenuContent>
                                     </DropdownMenu>
@@ -975,33 +966,32 @@ export default function Chat() {
                           </div>
                         </div>
 
-                        {/* Offline Friends */}
-                        {friends.filter((friend) => !friend.is_online).length >
+                        {/* Offline mentors */}
+                        {mentorshipConnections.filter((mentor) => !mentor.is_online).length >
                           0 && (
                           <div>
                             <h6 className="text-xs font-medium text-muted-foreground mb-2 uppercase tracking-wide">
                               Offline
                             </h6>
                             <div className="space-y-1">
-                              {friends
-                                .filter((friend) => !friend.is_online)
-                                .map((friend) => (
+                              {mentorshipConnections
+                                .filter((mentor) => !mentor.is_online)
+                                .map((mentor) => (
                                   <div
-                                    key={friend.id}
+                                    key={mentor.id}
                                     className="flex items-center justify-between p-2 rounded-lg hover:bg-muted/50 transition-colors group"
                                   >
                                     <div
                                       className="flex items-center space-x-3 flex-1 cursor-pointer"
-                                      onClick={() => handleStartChat(friend.id)}
+                                      onClick={() => handleStartChat(mentor.id)}
                                     >
-                                      <UserAvatar user={friend} size="sm" />
+                                      <UserAvatar user={mentor} size="sm" />
                                       <div>
                                         <p className="font-medium text-foreground">
-                                          {friend.full_name}
+                                          {mentor.full_name}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                          @{friend.username} •{" "}
-                                          {formatLastSeen(friend.last_seen)}
+                                          Last active: {formatLastSeen(mentor.last_seen)}
                                         </p>
                                       </div>
                                     </div>
@@ -1010,12 +1000,12 @@ export default function Chat() {
                                         variant="ghost"
                                         size="sm"
                                         onClick={() =>
-                                          handleStartChat(friend.id)
+                                          handleStartChat(mentor.id)
                                         }
-                                        disabled={creatingChat === friend.id}
-                                        data-testid={`button-chat-${friend.id}`}
+                                        disabled={creatingChat === mentor.id}
+                                        data-testid={`button-chat-${mentor.id}`}
                                       >
-                                        {creatingChat === friend.id ? (
+                                        {creatingChat === mentor.id ? (
                                           <LoadingSpinner size="sm" />
                                         ) : (
                                           <MessageSquare className="w-4 h-4" />
@@ -1030,19 +1020,19 @@ export default function Chat() {
                                         <DropdownMenuContent align="end">
                                           <DropdownMenuItem
                                             onClick={() =>
-                                              handleStartChat(friend.id)
+                                              handleStartChat(mentor.id)
                                             }
                                           >
                                             <MessageSquare className="w-4 h-4 mr-2" />
-                                            Send Message
+                                            Continue session
                                           </DropdownMenuItem>
                                           <DropdownMenuItem>
                                             <Users className="w-4 h-4 mr-2" />
-                                            View Profile
+                                            View Mentor Profile
                                           </DropdownMenuItem>
                                           <DropdownMenuItem className="text-red-600">
                                             <X className="w-4 h-4 mr-2" />
-                                            Remove Friend
+                                            Remove Connection
                                           </DropdownMenuItem>
                                         </DropdownMenuContent>
                                       </DropdownMenu>
@@ -1057,17 +1047,17 @@ export default function Chat() {
                       <div className="text-center py-8">
                         <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
                         <p className="text-muted-foreground mb-2">
-                          No contacts yet
+                          No mentorship connections yet
                         </p>
                         <p className="text-sm text-muted-foreground mb-4">
-                          Add friends to start chatting and create groups
+                          Request mentorship to unlock guided sessions
                         </p>
                         <Button
                           variant="outline"
-                          onClick={() => setShowAddFriend(true)}
+                          onClick={() => setShowRequestMentorship(true)}
                         >
                           <UserPlus className="w-4 h-4 mr-2" />
-                          Add your first contact
+                          Connect with a mentor
                         </Button>
                       </div>
                     )}
@@ -1423,7 +1413,10 @@ export default function Chat() {
       </div>
 
       {/* Modals */}
-      <AddFriendModal open={showAddFriend} onOpenChange={setShowAddFriend} />
+      <RequestMentorshipModal
+        open={showRequestMentorship}
+        onOpenChange={setShowRequestMentorship}
+      />
       <NotificationsModal
         open={showNotifications}
         onOpenChange={setShowNotifications}
@@ -1431,7 +1424,6 @@ export default function Chat() {
       <CreateGroupModal
         open={showCreateGroup}
         onOpenChange={setShowCreateGroup}
-        friends={friends}
       />
       <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
     </div>
