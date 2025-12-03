@@ -102,11 +102,11 @@ function MentorInfoCard({ mentor }: { mentor?: MentorProfile }) {
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-muted-foreground">
             <GraduationCap className="w-4 h-4" />
-            <span>University: Example University</span>
+            <span>University: MIT</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <BookOpen className="w-4 h-4" />
-            <span>Course: Example Course</span>
+            <span>Course: CS</span>
           </div>
           <div className="flex items-center gap-2 text-muted-foreground">
             <Compass className="w-4 h-4" />
@@ -701,8 +701,10 @@ export default function Chat() {
                   value="mentors"
                   className="flex items-center gap-2"
                 >
-                  <Users className="w-4 h-4" />
-                  Mentor Network
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+                    <Users className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-medium">Mentor Network</span>
                   {pendingRequests.length > 0 && (
                     <Badge
                       variant="destructive"
@@ -713,8 +715,10 @@ export default function Chat() {
                   )}
                 </TabsTrigger>
                 <TabsTrigger value="rooms" className="flex items-center gap-2">
-                  <MessageSquare className="w-4 h-4" />
-                  Mentorship Sessions
+                  <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-primary/10 text-primary">
+                    <MessageSquare className="w-4 h-4" />
+                  </span>
+                  <span className="text-sm font-medium">Mentorship Sessions</span>
                   {rooms.some(
                     (room) => room.unread_count && room.unread_count > 0,
                   ) && (
@@ -1331,7 +1335,7 @@ export default function Chat() {
                       )}
                     </div>
 
-                    <div className="shrink-0 bg-muted/40 border-t border-border/70 rounded-b-2xl">
+                    <div className="shrink-0 bg-card/95 border-t border-border/70 rounded-b-2xl backdrop-blur-sm">
                       <form
                         onSubmit={handleSendMessage}
                         className="p-4"
@@ -1363,7 +1367,7 @@ export default function Chat() {
                           </div>
                         )}
 
-                        <div className="flex space-x-2">
+                        <div className="flex space-x-2 items-center">
                           <Input
                             value={newMessage}
                             onChange={(e) => setNewMessage(e.target.value)}
@@ -1372,7 +1376,7 @@ export default function Chat() {
                                 ? "Ask your mentor a question…"
                                 : "Share an update with your mentorship circle…"
                             }
-                            className="flex-1 rounded-full bg-white/90 border-border/80"
+                            className="flex-1 rounded-full bg-background border border-border text-foreground shadow-md placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-primary focus-visible:border-primary"
                             data-testid="message-input"
                           />
                           <Button
