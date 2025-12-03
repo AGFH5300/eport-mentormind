@@ -30,16 +30,16 @@ interface SearchUser {
   relationship_status: 'none' | 'friends' | 'request_sent' | 'request_received';
 }
 
-interface AddFriendModalProps {
+interface RequestMentorshipModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
+export function RequestMentorshipModal({ open, onOpenChange }: RequestMentorshipModalProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const { refreshFriends } = useChat();
+  const { refreshMentorships } = useChat();
   
   const [searchTerm, setSearchTerm] = useState('');
   const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
@@ -61,7 +61,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
     staleTime: 30000,
   });
 
-  // Send friend request mutation
+  // Send mentorship request mutation
   const sendFriendRequestMutation = useMutation({
     mutationFn: async (recipientId: string) => {
       const session = await supabase.auth.getSession();
@@ -85,8 +85,8 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/users/search'] });
       queryClient.invalidateQueries({ queryKey: ['/api/friend-requests'] });
       toast({
-        title: 'Friend request sent',
-        description: 'Your friend request has been sent successfully.',
+        title: 'Mentorship request sent',
+        description: 'Your request has been shared with the mentor.',
       });
     },
     onError: (error: any) => {
@@ -98,12 +98,12 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
     },
   });
 
-  // Accept friend request mutation
+  // Accept mentorship request mutation
   const acceptFriendRequestMutation = useMutation({
     mutationFn: async (userId: string) => {
       const session = await supabase.auth.getSession();
       
-      // First, find the friend request
+      // First, find the mentorship request
       const requestsResponse = await fetch('/api/friend-requests', {
         headers: {
           'Authorization': `Bearer ${session.data.session?.access_token}`,
@@ -111,16 +111,16 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
       });
       
       if (!requestsResponse.ok) {
-        throw new Error('Failed to fetch friend requests');
+        throw new Error('Failed to fetch mentorship requests');
       }
       
       const requests = await requestsResponse.json();
-      const request = requests.find((req: any) => 
+      const request = requests.find((req: any) =>
         req.user.id === userId && !req.is_sender
       );
-      
+
       if (!request) {
-        throw new Error('Friend request not found');
+        throw new Error('Mentorship request not found');
       }
 
       // Accept the request
@@ -143,27 +143,27 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/users/search'] });
       queryClient.invalidateQueries({ queryKey: ['/api/friend-requests'] });
-      refreshFriends();
+      refreshMentorships();
       toast({
-        title: 'Friend request accepted',
-        description: 'You are now friends!',
+        title: 'Mentorship request accepted',
+        description: 'You can now start a mentorship session.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to accept friend request',
+        description: error.message || 'Failed to accept mentorship request',
         variant: 'destructive',
       });
     },
   });
 
-  // Reject friend request mutation
+  // Reject mentorship request mutation
   const rejectFriendRequestMutation = useMutation({
     mutationFn: async (userId: string) => {
       const session = await supabase.auth.getSession();
       
-      // First, find the friend request
+      // First, find the mentorship request
       const requestsResponse = await fetch('/api/friend-requests', {
         headers: {
           'Authorization': `Bearer ${session.data.session?.access_token}`,
@@ -171,16 +171,16 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
       });
       
       if (!requestsResponse.ok) {
-        throw new Error('Failed to fetch friend requests');
+        throw new Error('Failed to fetch mentorship requests');
       }
       
       const requests = await requestsResponse.json();
-      const request = requests.find((req: any) => 
+      const request = requests.find((req: any) =>
         req.user.id === userId && !req.is_sender
       );
       
       if (!request) {
-        throw new Error('Friend request not found');
+        throw new Error('Mentorship request not found');
       }
 
       // Reject the request
@@ -204,14 +204,14 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
       queryClient.invalidateQueries({ queryKey: ['/api/users/search'] });
       queryClient.invalidateQueries({ queryKey: ['/api/friend-requests'] });
       toast({
-        title: 'Friend request declined',
-        description: 'Friend request has been declined.',
+        title: 'Mentorship request declined',
+        description: 'Mentorship request has been declined.',
       });
     },
     onError: (error: any) => {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to decline friend request',
+        description: error.message || 'Failed to decline mentorship request',
         variant: 'destructive',
       });
     },
@@ -235,13 +235,13 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
         return (
           <Badge variant="secondary" className="text-xs">
             <Check className="w-3 h-3 mr-1" />
-            Friends
+            Mentorship in progress
           </Badge>
         );
       case 'request_sent':
         return (
           <Badge variant="outline" className="text-xs">
-            Request Sent
+            Mentorship Request Pending
           </Badge>
         );
       case 'request_received':
@@ -254,7 +254,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <Check className="w-4 h-4 mr-1" />
-              Accept
+              Accept Mentorship
             </Button>
             <Button
               size="sm"
@@ -277,7 +277,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
             disabled={sendFriendRequestMutation.isPending}
           >
             <UserPlus className="w-4 h-4 mr-1" />
-            Add Friend
+            Request Mentorship
           </Button>
         );
     }
@@ -289,7 +289,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5" />
-            Add Friend
+            Request Mentorship
           </DialogTitle>
         </DialogHeader>
 
@@ -298,7 +298,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" />
             <Input
-              placeholder="Search by username or email..."
+              placeholder="Search by name, university, or email..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -327,7 +327,7 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
                           <p className="text-sm text-muted-foreground">@{user.username}</p>
                           {user.relationship_status === 'request_received' && (
                             <p className="text-xs text-blue-600 dark:text-blue-400">
-                              Sent you a friend request
+                              Sent you a mentorship request
                             </p>
                           )}
                         </div>
@@ -340,14 +340,14 @@ export function AddFriendModal({ open, onOpenChange }: AddFriendModalProps) {
             ) : debouncedSearchTerm.length > 0 ? (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <Search className="w-12 h-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">No users found</p>
+                <p className="text-muted-foreground">No mentors found</p>
                 <p className="text-sm text-muted-foreground">Try searching with a different term</p>
               </div>
             ) : (
               <div className="flex flex-col items-center justify-center py-8 text-center">
                 <UserPlus className="w-12 h-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">Search for friends</p>
-                <p className="text-sm text-muted-foreground">Enter a username or email to find people</p>
+                <p className="text-muted-foreground">Search for mentors</p>
+                <p className="text-sm text-muted-foreground">Enter a name, university, or email to find support</p>
               </div>
             )}
           </div>

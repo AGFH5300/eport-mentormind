@@ -16,6 +16,9 @@ import SetPassword from '@/pages/auth/SetPassword';
 
 // Main pages
 import Chat from '@/pages/Chat';
+import FindMentor from '@/pages/FindMentor';
+import MySessions from '@/pages/MySessions';
+import Profile from '@/pages/Profile';
 import NotFound from '@/pages/not-found';
 
 // UI components
@@ -82,7 +85,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user && user.email_verified) {
-    console.log('[PUBLIC ROUTE DEBUG] User is authenticated and verified, redirecting to chat');
+    console.log('[PUBLIC ROUTE DEBUG] User is authenticated and verified, redirecting to home');
     window.location.href = '/';
     return null;
   }
@@ -117,9 +120,14 @@ function RootRoute() {
     return null;
   }
 
-  console.log('[ROOT ROUTE DEBUG] User authenticated, redirecting to chat');
-  window.location.href = '/chat';
-  return null;
+  console.log('[ROOT ROUTE DEBUG] User authenticated, rendering home');
+  return (
+    <ProtectedRoute>
+      <ChatProvider>
+        <Chat />
+      </ChatProvider>
+    </ProtectedRoute>
+  );
 }
 
 function AppContent() {
@@ -144,6 +152,21 @@ function AppContent() {
       <Router>
         <Switch>
           <Route path="/" component={RootRoute} />
+          <Route path="/find-mentor">
+            <ProtectedRoute>
+              <FindMentor />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/my-sessions">
+            <ProtectedRoute>
+              <MySessions />
+            </ProtectedRoute>
+          </Route>
+          <Route path="/profile">
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          </Route>
           <Route path="/chat">
             <ProtectedRoute>
               <ChatProvider>

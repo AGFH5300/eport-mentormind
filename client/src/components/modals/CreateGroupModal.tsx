@@ -96,7 +96,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Hash className="w-5 h-5" />
-            Create Group
+            Create mentorship circle
           </DialogTitle>
         </DialogHeader>
 
@@ -107,10 +107,10 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               name="name"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Group Name</FormLabel>
+                  <FormLabel>Circle name</FormLabel>
                   <FormControl>
                     <Input
-                      placeholder="Enter group name"
+                      placeholder="Ex: First-year study support"
                       {...field}
                       data-testid="input-group-name"
                     />
@@ -125,10 +125,10 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
               name="description"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Description</FormLabel>
+                  <FormLabel>Purpose</FormLabel>
                   <FormControl>
                     <Textarea
-                      placeholder="Enter room description (optional)"
+                      placeholder="Share how this circle supports mentees (e.g., weekly Q&A, exam prep)."
                       rows={3}
                       {...field}
                       value={field.value || ''}
@@ -148,10 +148,10 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
                   <div className="space-y-0.5">
                     <FormLabel className="flex items-center gap-2">
                       <Lock className="w-4 h-4" />
-                      Private Room
+                      Private circle
                     </FormLabel>
                     <p className="text-sm text-muted-foreground">
-                      Only invited members can join
+                      Only invited mentors and mentees can join
                     </p>
                   </div>
                   <FormControl>
@@ -185,7 +185,7 @@ export function CreateGroupModal({ open, onOpenChange }: CreateGroupModalProps) 
                     Creating...
                   </>
                 ) : (
-                  'Create Room'
+                  'Create circle'
                 )}
               </Button>
             </DialogFooter>

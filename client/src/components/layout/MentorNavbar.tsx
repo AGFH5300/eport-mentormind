@@ -7,10 +7,10 @@ import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 
 const navItems = [
-  { label: "Home", href: "/chat" },
-  { label: "Find a Mentor", href: "/chat" },
-  { label: "My Sessions", href: "/chat" },
-  { label: "Profile", href: "/chat" },
+  { label: "Home", href: "/" },
+  { label: "Find a Mentor", href: "/find-mentor" },
+  { label: "My Sessions", href: "/my-sessions" },
+  { label: "Profile", href: "/profile" },
 ];
 
 export function MentorNavbar() {
@@ -44,7 +44,11 @@ export function MentorNavbar() {
         <div className="hidden md:flex items-center gap-6">
           <NavLinks />
           <Separator orientation="vertical" className="h-6" />
-          <Button variant="secondary" className="rounded-full">Start new mentorship</Button>
+          <Link href="/find-mentor">
+            <Button asChild={false} variant="secondary" className="rounded-full">
+              Start new mentorship
+            </Button>
+          </Link>
         </div>
 
         <div className="md:hidden">
@@ -72,9 +76,11 @@ export function MentorNavbar() {
                     </Link>
                   ))}
                 </div>
-                <Button className="w-full" onClick={() => setOpen(false)}>
-                  Start new mentorship
-                </Button>
+                <Link href="/find-mentor">
+                  <Button className="w-full" onClick={() => setOpen(false)}>
+                    Start new mentorship
+                  </Button>
+                </Link>
               </div>
             </SheetContent>
           </Sheet>

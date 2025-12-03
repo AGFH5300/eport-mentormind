@@ -144,9 +144,14 @@ export interface RoomWithDetails extends ChatRoom {
   user_role?: string;
 }
 
-export interface FriendWithStatus extends User {
+export interface MentorshipConnection extends User {
   friendship_id?: string;
   friend_request_id?: string;
   request_status?: string;
   is_sender?: boolean;
 }
+
+// Backwards compatibility for any legacy imports
+export type FriendWithStatus = MentorshipConnection;
+
+export type MentorshipRequest = FriendRequest;
