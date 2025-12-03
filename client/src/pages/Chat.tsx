@@ -1420,6 +1420,8 @@ export default function Chat() {
         </ResizablePanel>
       </ResizablePanelGroup>
 
+      </div>
+
       {/* Modals */}
       <AddFriendModal open={showAddFriend} onOpenChange={setShowAddFriend} />
       <NotificationsModal
