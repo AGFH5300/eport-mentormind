@@ -58,14 +58,16 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black px-4">
-      <Card className="w-full max-w-md border shadow-sm">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <LogIn className="w-8 h-8 text-gray-600 dark:text-gray-400" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md border border-border/70 shadow-lg rounded-2xl bg-card/90">
+        <CardHeader className="text-center space-y-3">
+          <div className="flex items-center justify-center mb-2">
+            <LogIn className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Welcome to ChatFlow</CardTitle>
-          <p className="text-muted-foreground">Sign in to start chatting with your friends</p>
+          <CardTitle className="text-2xl">Welcome to MentorMind</CardTitle>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Sign in with your school email to continue your alumni mentorship conversations and plan your next session.
+          </p>
         </CardHeader>
 
         <CardContent>
@@ -76,11 +78,11 @@ export default function Login() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email or Username</FormLabel>
+                    <FormLabel>School email</FormLabel>
                     <FormControl>
                       <Input
                         type="text"
-                        placeholder="Enter your email or username"
+                        placeholder="name@school.edu"
                         {...field}
                         data-testid="input-email"
                       />
@@ -152,7 +154,7 @@ export default function Login() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full rounded-full"
                 disabled={isLoading}
                 data-testid="button-login"
               >
@@ -168,13 +170,13 @@ export default function Login() {
             </form>
           </Form>
 
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
-              Don't have an account?{' '}
-              <Link href="/signup" className="text-primary hover:underline font-medium">
-                Sign up
-              </Link>
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-muted-foreground text-sm">
+              New here? Start by creating your mentorship profile.
             </p>
+            <Link href="/signup" className="text-primary hover:underline font-medium">
+              Create a MentorMind account
+            </Link>
           </div>
         </CardContent>
       </Card>

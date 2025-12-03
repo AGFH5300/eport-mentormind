@@ -78,14 +78,16 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black px-4">
-      <Card className="w-full max-w-md border shadow-sm">
-        <CardHeader className="text-center">
-          <div className="flex items-center justify-center mb-4">
-            <UserPlus className="w-8 h-8 text-gray-600 dark:text-gray-400" />
+    <div className="min-h-screen flex items-center justify-center bg-background px-4">
+      <Card className="w-full max-w-md border border-border/70 shadow-lg rounded-2xl bg-card/90">
+        <CardHeader className="text-center space-y-3">
+          <div className="flex items-center justify-center mb-2">
+            <UserPlus className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">Join ChatFlow</CardTitle>
-          <p className="text-muted-foreground">Create your account to start chatting</p>
+          <CardTitle className="text-2xl">Join MentorMind</CardTitle>
+          <p className="text-muted-foreground text-sm leading-relaxed">
+            Create your mentorship profile to connect with alumni, ask questions, and book guidance sessions.
+          </p>
         </CardHeader>
 
         <CardContent>
@@ -96,7 +98,7 @@ export default function Signup() {
                 name="full_name"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name</FormLabel>
+                    <FormLabel>Full name</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter your full name"
@@ -114,7 +116,7 @@ export default function Signup() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Username</FormLabel>
+                    <FormLabel>Preferred username</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Choose a username"
@@ -132,7 +134,7 @@ export default function Signup() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email</FormLabel>
+                    <FormLabel>School email</FormLabel>
                     <FormControl>
                       <Input
                         type="email"
@@ -148,7 +150,7 @@ export default function Signup() {
 
               <Button
                 type="submit"
-                className="w-full"
+                className="w-full rounded-full"
                 disabled={isLoading}
                 data-testid="button-signup"
               >
@@ -164,13 +166,13 @@ export default function Signup() {
             </form>
           </Form>
 
-          <div className="mt-6 text-center">
-            <p className="text-muted-foreground">
-              Already have an account?{' '}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
+          <div className="mt-6 text-center space-y-2">
+            <p className="text-muted-foreground text-sm">
+              Already part of the hub?
             </p>
+            <Link href="/login" className="text-primary hover:underline font-medium">
+              Sign in to your sessions
+            </Link>
           </div>
         </CardContent>
       </Card>

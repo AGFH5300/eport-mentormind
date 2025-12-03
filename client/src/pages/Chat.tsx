@@ -7,7 +7,7 @@ import { useRealtime } from "@/hooks/use-realtime";
 import { apiRequest } from "@/lib/queryClient";
 import { supabase } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
-import { MessageWithUser } from "@shared/schema";
+import { MessageWithUser, RoomWithDetails } from "@shared/schema";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -43,12 +44,16 @@ import {
   Hash,
   Bell,
   ChevronDown,
+  GraduationCap,
+  BookOpen,
+  Compass,
 } from "lucide-react";
 
 import { AddFriendModal } from "@/components/modals/AddFriendModal";
 import { NotificationsModal } from "@/components/modals/NotificationsModal";
 import { CreateGroupModal } from "@/components/modals/CreateGroupModal";
 import { SettingsModal } from "@/components/modals/SettingsModal";
+import { MentorNavbar } from "@/components/layout/MentorNavbar";
 
 interface FriendRequest {
   id: string;
@@ -72,6 +77,93 @@ interface FriendWithStatus {
   avatar_url: string | null;
   is_online?: boolean;
   last_seen?: string;
+}
+
+type MentorProfile = {
+  id?: string;
+  full_name?: string;
+  username?: string;
+  avatar_url?: string | null;
+};
+
+function MentorInfoCard({ mentor }: { mentor?: MentorProfile }) {
+  return (
+    <Card className="h-full border-border/80 shadow-sm bg-card/80">
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <UserAvatar
+            user={{
+              id: mentor?.id || "mentor",
+              full_name: mentor?.full_name || "Your mentor",
+              username: mentor?.username || "mentor",
+              avatar_url: mentor?.avatar_url || null,
+            }}
+            size="md"
+          />
+          <div>
+            <CardTitle className="text-lg">Mentor profile</CardTitle>
+            <p className="text-sm text-muted-foreground">
+              {mentor?.full_name || "Alumni mentor"}
+            </p>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4 text-sm">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <GraduationCap className="w-4 h-4" />
+            <span>University: Example University</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <BookOpen className="w-4 h-4" />
+            <span>Course: Example Course</span>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Compass className="w-4 h-4" />
+            <span>Can help with:</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              "Subject choices",
+              "University applications",
+              "Career questions",
+            ].map((item) => (
+              <Badge key={item} variant="outline" className="rounded-full">
+                {item}
+              </Badge>
+            ))}
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-border bg-muted/60 p-3">
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            "Let's focus on your goals. I can share my experience and connect you
+            with resources that make the next step clearer."
+          </p>
+        </div>
+
+        <div className="space-y-2">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Next steps
+          </p>
+          <ul className="space-y-2 text-muted-foreground">
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary" />
+              Plan your next mentorship session
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary/70" />
+              Share your recent wins or questions
+            </li>
+            <li className="flex items-center gap-2">
+              <span className="h-2 w-2 rounded-full bg-primary/50" />
+              Keep notes from each conversation
+            </li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function Chat() {
@@ -527,22 +619,58 @@ export default function Chat() {
     })),
   });
 
+  const mentorMember =
+    activeRoom?.members?.find((m) => m.id !== user?.id) ||
+    activeRoom?.members?.[0];
+
   return (
-    <div className="flex h-screen bg-background">
-      <ResizablePanelGroup direction="horizontal" className="flex-1">
+    <div className="min-h-screen bg-background text-foreground">
+      <MentorNavbar />
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6 h-[calc(100vh-64px)]">
+        <div className="rounded-3xl bg-gradient-to-r from-primary/15 via-white to-accent/10 border border-border shadow-md p-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="space-y-2">
+              <p className="text-xs uppercase tracking-wide text-primary">
+                Mentorship hub
+              </p>
+              <h1 className="text-3xl font-semibold leading-tight">
+                MentorMind – Alumni–Student Mentorship Hub
+              </h1>
+              <p className="text-muted-foreground max-w-2xl">
+                Connect with alumni mentors, plan your mentorship sessions, and keep every conversation focused on your goals.
+              </p>
+            </div>
+            <div className="flex gap-3 flex-wrap">
+              <Card className="min-w-[160px] border-border/70 shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground">Active sessions</p>
+                  <p className="text-2xl font-semibold">{rooms.length}</p>
+                </CardContent>
+              </Card>
+              <Card className="min-w-[160px] border-border/70 shadow-sm">
+                <CardContent className="p-4">
+                  <p className="text-xs text-muted-foreground">Connections</p>
+                  <p className="text-2xl font-semibold">{friends.length}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex-1 rounded-3xl bg-card shadow-lg border border-border/80 overflow-hidden">
+          <ResizablePanelGroup direction="horizontal" className="h-full">
         {/* Sidebar */}
         <ResizablePanel defaultSize={30} minSize={20} maxSize={50}>
-          <div className="flex flex-col h-full border-r border-border bg-muted/20">
+          <div className="flex flex-col h-full border-r border-border/70 bg-muted/40">
             {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex items-center justify-between p-4 border-b border-border/70 bg-card/80">
               <div className="flex items-center space-x-3">
                 <UserAvatar user={user} size="sm" />
                 <div>
-                  <p className="font-medium text-foreground">
-                    {user.full_name}
-                  </p>
+                  <p className="font-medium text-foreground">{user.full_name}</p>
                   <p className="text-xs text-muted-foreground">
-                    @{user.username}
+                    Student • @{user.username}
                   </p>
                 </div>
               </div>
@@ -576,13 +704,13 @@ export default function Chat() {
 
             {/* Navigation */}
             <Tabs defaultValue="rooms" className="flex-1 flex flex-col">
-              <TabsList className="grid w-full grid-cols-2 m-2">
+              <TabsList className="grid w-full grid-cols-2 m-3 rounded-xl bg-card/80">
                 <TabsTrigger
                   value="friends"
                   className="flex items-center gap-2"
                 >
                   <Users className="w-4 h-4" />
-                  Friends
+                  Network
                   {pendingRequests.length > 0 && (
                     <Badge
                       variant="destructive"
@@ -594,7 +722,7 @@ export default function Chat() {
                 </TabsTrigger>
                 <TabsTrigger value="rooms" className="flex items-center gap-2">
                   <MessageSquare className="w-4 h-4" />
-                  Chats
+                  Mentorship Sessions
                   {rooms.some(
                     (room) => room.unread_count && room.unread_count > 0,
                   ) && (
@@ -616,9 +744,14 @@ export default function Chat() {
                   <div className="p-4">
                     {/* Header Actions */}
                     <div className="flex items-center justify-between mb-6">
-                      <h4 className="font-semibold text-foreground">
-                        Friends & Contacts
-                      </h4>
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          People
+                        </p>
+                        <h4 className="font-semibold text-foreground">
+                          Alumni & student connections
+                        </h4>
+                      </div>
                       <div className="flex space-x-2">
                         <Button
                           variant="outline"
@@ -627,7 +760,7 @@ export default function Chat() {
                           data-testid="button-add-friend"
                         >
                           <UserPlus className="w-4 h-4 mr-2" />
-                          Add Friend
+                          Invite mentor
                         </Button>
                         <Button
                           variant="outline"
@@ -636,7 +769,7 @@ export default function Chat() {
                           data-testid="button-create-group-from-contacts"
                         >
                           <Plus className="w-4 h-4 mr-2" />
-                          Create Group
+                          Start mentorship circle
                         </Button>
                       </div>
                     </div>
@@ -646,13 +779,13 @@ export default function Chat() {
                       <div className="mb-6">
                         <h5 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
                           <UserPlus className="w-4 h-4" />
-                          Friend Requests ({pendingRequests.length})
+                          Mentorship invitations ({pendingRequests.length})
                         </h5>
                         <div className="space-y-2">
                           {pendingRequests.map((request) => (
                             <div
                               key={request.id}
-                              className="flex items-center justify-between p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800"
+                              className="flex items-center justify-between p-3 bg-card rounded-xl border border-border/70 shadow-sm"
                             >
                               <div className="flex items-center space-x-3">
                                 <UserAvatar user={request.user} size="sm" />
@@ -661,8 +794,7 @@ export default function Chat() {
                                     {request.user.full_name}
                                   </p>
                                   <p className="text-xs text-muted-foreground">
-                                    @{request.user.username} • Wants to be
-                                    friends
+                                    @{request.user.username} • Wants to mentor
                                   </p>
                                 </div>
                               </div>
@@ -946,16 +1078,27 @@ export default function Chat() {
               <TabsContent value="rooms" className="flex-1 mt-0">
                 <ScrollArea className="h-full">
                   <div className="p-4">
-                    <div className="space-y-2">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                          My mentorship sessions
+                        </p>
+                        <h4 className="font-semibold">Guided conversations</h4>
+                      </div>
+                      <Badge variant="outline" className="rounded-full px-3 py-1">
+                        {rooms.length} active
+                      </Badge>
+                    </div>
+                    <div className="space-y-3">
                       {rooms.map((room) => (
                         <button
                           key={room.id}
                           onClick={() => handleRoomSelect(room)}
                           className={cn(
-                            "w-full flex items-center space-x-3 p-3 rounded-lg transition-colors text-left",
+                            "w-full flex items-center space-x-3 p-4 rounded-2xl transition-colors text-left border",
                             activeRoom?.id === room.id
-                              ? "bg-primary text-primary-foreground"
-                              : "hover:bg-muted/50",
+                              ? "bg-primary/10 border-primary/40 shadow-sm"
+                              : "hover:bg-muted/60 border-border/70 bg-card"
                           )}
                         >
                           {room.type === "direct" ? (
@@ -967,26 +1110,26 @@ export default function Chat() {
                               size="sm"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-2xl bg-muted flex items-center justify-center">
                               <Hash className="w-4 h-4" />
                             </div>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between">
-                              <p className="font-medium truncate">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="font-semibold truncate">
                                 {room.type === "direct"
                                   ? room.members.find((m) => m.id !== user?.id)
                                       ?.full_name || room.name
                                   : room.name}
                               </p>
                               {room.unread_count && room.unread_count > 0 && (
-                                <Badge variant="destructive" className="ml-2">
+                                <Badge variant="destructive" className="ml-2 rounded-full">
                                   {room.unread_count}
                                 </Badge>
                               )}
                             </div>
                             {room.last_message && (
-                              <div className="flex justify-between items-center">
+                              <div className="flex justify-between items-center gap-2 mt-1">
                                 <p className="text-xs text-muted-foreground truncate flex-1">
                                   {room.last_message.user.username}:{" "}
                                   {room.last_message.content}
@@ -1013,252 +1156,262 @@ export default function Chat() {
 
         {/* Main Content */}
         <ResizablePanel defaultSize={70} minSize={50}>
-          <div className="flex flex-col h-full">
+          <div className="flex flex-col h-full bg-gradient-to-br from-card to-primary/10">
             {activeRoom ? (
               <>
-                {/* Chat Header */}
-                <div className="flex items-center justify-between p-4 border-b border-border bg-background">
-                  <div className="flex items-center space-x-3">
-                    {activeRoom.type === "direct" ? (
-                      <UserAvatar
-                        user={
-                          activeRoom.members.find((m) => m.id !== user?.id) ||
-                          activeRoom.members[0]
-                        }
-                        size="sm"
-                      />
-                    ) : (
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
-                        <Hash className="w-4 h-4" />
+                <div className="flex flex-col gap-3 p-5 border-b border-border/70 bg-card/90">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {activeRoom.type === "direct" ? (
+                        <UserAvatar
+                          user={
+                            activeRoom.members.find((m) => m.id !== user?.id) ||
+                            activeRoom.members[0]
+                          }
+                          size="md"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center">
+                          <Hash className="w-5 h-5" />
+                        </div>
+                      )}
+                      <div>
+                        <p className="text-xs uppercase tracking-wide text-primary">
+                          Active mentorship
+                        </p>
+                        <h3 className="text-xl font-semibold text-foreground">
+                          {activeRoom.type === "direct"
+                            ? activeRoom.members.find((m) => m.id !== user?.id)
+                                ?.full_name || activeRoom.name
+                            : activeRoom.name}
+                        </h3>
+                        <p className="text-sm text-muted-foreground">
+                          {activeRoom.type === "group"
+                            ? `${(activeRoom.members ?? []).length} mentors & students`
+                            : "Planning next session • Share your questions"}
+                        </p>
                       </div>
-                    )}
-                    <div>
-                      <h3 className="font-semibold text-foreground">
-                        {activeRoom.type === "direct"
-                          ? activeRoom.members.find((m) => m.id !== user?.id)
-                              ?.full_name || activeRoom.name
-                          : activeRoom.name}
-                      </h3>
-                      <p className="text-xs text-muted-foreground">
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="rounded-full">
                         {activeRoom.type === "group"
                           ? `${(activeRoom.members ?? []).length} members`
                           : (() => {
-                              const otherMember = (
-                                activeRoom.members ?? []
-                              ).find((m) => m.id !== user?.id);
+                              const otherMember = (activeRoom.members ?? []).find(
+                                (m) => m.id !== user?.id,
+                              );
                               return otherMember?.is_online
-                                ? "Online"
-                                : `Last seen ${formatLastSeen(otherMember?.last_seen)}`;
+                                ? "Online now"
+                                : formatLastSeen(otherMember?.last_seen);
                             })()}
-                      </p>
+                      </Badge>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="outline" size="icon" className="rounded-full">
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() => {
+                              console.log("View profile for", activeRoom);
+                            }}
+                          >
+                            <Users className="w-4 h-4 mr-2" />
+                            View profile
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            onClick={() => {
+                              toast({
+                                title: "Notifications muted",
+                                description:
+                                  "You will no longer receive notifications from this chat.",
+                              });
+                            }}
+                          >
+                            <Bell className="w-4 h-4 mr-2" />
+                            Mute notifications
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => {
+                              setActiveRoom(null);
+                              toast({
+                                title: "Left chat",
+                                description: "You have left this conversation.",
+                              });
+                            }}
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            Leave session
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
                   </div>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
-                        <MoreVertical className="w-4 h-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => {
-                          // View profile functionality
-                          console.log("View profile for", activeRoom);
-                        }}
-                      >
-                        <Users className="w-4 h-4 mr-2" />
-                        View Profile
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        onClick={() => {
-                          // Mute notifications functionality
-                          toast({
-                            title: "Notifications muted",
-                            description:
-                              "You will no longer receive notifications from this chat.",
-                          });
-                        }}
-                      >
-                        <Bell className="w-4 h-4 mr-2" />
-                        Mute Notifications
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-red-600"
-                        onClick={() => {
-                          // Leave chat functionality
-                          setActiveRoom(null);
-                          toast({
-                            title: "Left chat",
-                            description: "You have left this conversation.",
-                          });
-                        }}
-                      >
-                        <X className="w-4 h-4 mr-2" />
-                        Leave Chat
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </div>
 
-                {/* Messages */}
-                <div className="flex-1 min-h-0 relative">
-                  <ScrollArea 
-                    className="h-full p-4"
-                    ref={scrollAreaRef}
-                  >
-                    
-                    <div className="space-y-0">
-                      {(() => {
-                        console.log(
-                          "[CHAT RENDER DEBUG] ===== RENDERING MESSAGES =====",
-                        );
-                        console.log("[CHAT RENDER DEBUG] Messages to render:", {
-                          count: messages.length,
-                          timestamp: new Date().toISOString(),
-                          activeRoomId: activeRoom?.id,
-                          messages: messages.map((m) => ({
-                            id: m.id,
-                            tempId: m.tempId,
-                            content: m.content?.substring(0, 50),
-                            user_id: m.user_id,
-                            username: m.user?.username,
-                            created_at: m.created_at,
-                            status: m.status,
-                          })),
-                        });
-                        return null;
-                      })()}
-                      {[...messages]
-                        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                        .map((message, index, arr) => {
-                          console.log('[CHAT RENDER DEBUG] Rendering individual message:', {
-                            id: message.id,
-                            tempId: message.tempId,
-                            content: message.content?.substring(0, 30),
-                            username: message.user?.username,
-                            status: message.status
-                          });
+                <div className="grid grid-cols-1 xl:grid-cols-4 gap-4 flex-1 min-h-0 p-4">
+                  <div className="xl:col-span-3 bg-card border border-border/80 rounded-2xl shadow-sm flex flex-col min-h-0">
+                    <div className="flex-1 min-h-0 relative">
+                      <ScrollArea className="h-full px-4 py-3" ref={scrollAreaRef}>
+                        <div className="space-y-0">
+                          {(() => {
+                            console.log(
+                              "[CHAT RENDER DEBUG] ===== RENDERING MESSAGES =====",
+                            );
+                            console.log("[CHAT RENDER DEBUG] Messages to render:", {
+                              count: messages.length,
+                              timestamp: new Date().toISOString(),
+                              activeRoomId: activeRoom?.id,
+                              messages: messages.map((m) => ({
+                                id: m.id,
+                                tempId: m.tempId,
+                                content: m.content?.substring(0, 50),
+                                user_id: m.user_id,
+                                username: m.user?.username,
+                                created_at: m.created_at,
+                                status: m.status,
+                              })),
+                            });
+                            return null;
+                          })()}
+                          {[...messages]
+                            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                            .map((message, index, arr) => {
+                              console.log('[CHAT RENDER DEBUG] Rendering individual message:', {
+                                id: message.id,
+                                tempId: message.tempId,
+                                content: message.content?.substring(0, 30),
+                                username: message.user?.username,
+                                status: message.status
+                              });
 
-                          const prev = index > 0 ? arr[index - 1] : undefined;
-                          const next = index < arr.length - 1 ? arr[index + 1] : undefined;
-                          const groupedWithPrev = !!prev && prev.user_id === message.user_id;
-                          const groupedWithNext = !!next && next.user_id === message.user_id;
+                              const prev = index > 0 ? arr[index - 1] : undefined;
+                              const next = index < arr.length - 1 ? arr[index + 1] : undefined;
+                              const groupedWithPrev = !!prev && prev.user_id === message.user_id;
+                              const groupedWithNext = !!next && next.user_id === message.user_id;
 
-                          const itemMargin = groupedWithPrev ? 'mt-[3px]' : 'mt-3';
-                          
-                          const hideAvatar = groupedWithNext;   
-                          const hideHeader = groupedWithPrev;    
+                              const itemMargin = groupedWithPrev ? 'mt-[3px]' : 'mt-3';
 
-                          return (
-                            <div
-                              key={message.id ?? message.tempId ?? `${message.user_id}-${message.created_at}`}
-                              className={itemMargin}
-                            >
-                              <MessageBubble
-                                message={message}
-                                onReply={(msg) => setReplyingTo(msg)}
-                                hideAvatar={hideAvatar}
-                                hideHeader={hideHeader}
-                              />
-                            </div>
-                          );
-                        })}
-                      {typingUsersData.length > 0 && (
-                        <TypingIndicator users={typingUsersData} />
-                      )}
-                      <div ref={messagesEndRef} />
-                    </div>
-                  </ScrollArea>
+                              const hideAvatar = groupedWithNext;
+                              const hideHeader = groupedWithPrev;
 
-                  {/* Scroll to bottom button */}
-                  {!isAtBottom && (
-                    <div className="absolute bottom-4 right-4 z-10">
-                      <Button
-                        onClick={handleScrollToBottom}
-                        className="rounded-full w-12 h-12 shadow-lg"
-                        size="icon"
-                        data-testid="scroll-to-bottom"
-                      >
-                        {unreadCount > 0 && (
-                          <Badge
-                            className="absolute -top-2 -right-2 min-w-[20px] h-5 text-xs"
-                            data-testid="unread-count"
-                          >
-                            {unreadCount > 99 ? "99+" : unreadCount}
-                          </Badge>
-                        )}
-                        <ChevronDown className="w-5 h-5" />
-                      </Button>
-                    </div>
-                  )}
-                </div>
+                              return (
+                                <div
+                                  key={message.id ?? message.tempId ?? `${message.user_id}-${message.created_at}`}
+                                  className={itemMargin}
+                                >
+                                  <MessageBubble
+                                    message={message}
+                                    onReply={(msg) => setReplyingTo(msg)}
+                                    hideAvatar={hideAvatar}
+                                    hideHeader={hideHeader}
+                                  />
+                                </div>
+                              );
+                            })}
+                          {typingUsersData.length > 0 && (
+                            <TypingIndicator users={typingUsersData} />
+                          )}
+                          <div ref={messagesEndRef} />
+                        </div>
+                      </ScrollArea>
 
-                {/* Message Input */}
-                <div className="shrink-0">
-                  <form
-                    onSubmit={handleSendMessage}
-                    className="p-4 border-t border-border"
-                  >
-                    {/* Reply Preview */}
-                    {replyingTo && (
-                      <div className="mb-3 p-3 bg-muted rounded-lg border-l-4 border-primary">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium text-foreground">
-                              Replying to @{replyingTo.user.username}
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {replyingTo.content.length > 50
-                                ? `${replyingTo.content.substring(0, 50)}...`
-                                : replyingTo.content}
-                            </p>
-                          </div>
+                      {/* Scroll to bottom button */}
+                      {!isAtBottom && (
+                        <div className="absolute bottom-4 right-4 z-10">
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setReplyingTo(null)}
-                            data-testid="cancel-reply"
+                            onClick={handleScrollToBottom}
+                            className="rounded-full w-12 h-12 shadow-lg"
+                            size="icon"
+                            data-testid="scroll-to-bottom"
                           >
-                            <X className="w-4 h-4" />
+                            {unreadCount > 0 && (
+                              <Badge
+                                className="absolute -top-2 -right-2 min-w-[20px] h-5 text-xs"
+                                data-testid="unread-count"
+                              >
+                                {unreadCount > 99 ? "99+" : unreadCount}
+                              </Badge>
+                            )}
+                            <ChevronDown className="w-5 h-5" />
                           </Button>
                         </div>
-                      </div>
-                    )}
-
-                    <div className="flex space-x-2">
-                      <Input
-                        value={newMessage}
-                        onChange={(e) => setNewMessage(e.target.value)}
-                        placeholder={`Message ${
-                          activeRoom.type === "direct"
-                            ? activeRoom.members.find((m) => m.id !== user?.id)
-                                ?.full_name || activeRoom.name
-                            : activeRoom.name
-                        }...`}
-                        className="flex-1"
-                        data-testid="message-input"
-                      />
-                      <Button
-                        type="submit"
-                        disabled={!newMessage.trim()}
-                        data-testid="send-button"
-                      >
-                        <Send className="w-4 h-4" />
-                      </Button>
+                      )}
                     </div>
-                  </form>
+
+                    <div className="shrink-0 bg-muted/40 border-t border-border/70 rounded-b-2xl">
+                      <form
+                        onSubmit={handleSendMessage}
+                        className="p-4"
+                      >
+                        {/* Reply Preview */}
+                        {replyingTo && (
+                          <div className="mb-3 p-3 bg-card rounded-xl border border-primary/30">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-medium text-foreground">
+                                  Replying to @{replyingTo.user.username}
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  {replyingTo.content.length > 50
+                                    ? `${replyingTo.content.substring(0, 50)}...`
+                                    : replyingTo.content}
+                                </p>
+                              </div>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setReplyingTo(null)}
+                                data-testid="cancel-reply"
+                              >
+                                <X className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex space-x-2">
+                          <Input
+                            value={newMessage}
+                            onChange={(e) => setNewMessage(e.target.value)}
+                            placeholder={
+                              activeRoom.type === "direct"
+                                ? "Ask your mentor a question…"
+                                : "Share an update with your mentorship circle…"
+                            }
+                            className="flex-1 rounded-full bg-white/90 border-border/80"
+                            data-testid="message-input"
+                          />
+                          <Button
+                            type="submit"
+                            disabled={!newMessage.trim()}
+                            data-testid="send-button"
+                            className="rounded-full"
+                          >
+                            <Send className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+
+                  <div className="hidden xl:block h-full">
+                    <MentorInfoCard mentor={mentorMember} />
+                  </div>
                 </div>
               </>
             ) : (
               <div className="flex items-center justify-center h-full text-center">
-                <div>
-                  <MessageSquare className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <div className="max-w-md">
+                  <MessageSquare className="w-12 h-12 text-primary mx-auto mb-4" />
                   <h3 className="font-semibold text-foreground mb-2">
-                    Welcome to ChatFlow
+                    Welcome to MentorMind
                   </h3>
                   <p className="text-muted-foreground">
-                    Select a room to start chatting or create a new one
+                    Select a mentorship session from the left or start a new one to begin chatting.
                   </p>
                 </div>
               </div>
@@ -1279,6 +1432,7 @@ export default function Chat() {
         friends={friends}
       />
       <SettingsModal open={showSettings} onOpenChange={setShowSettings} />
+    </div>
     </div>
   );
 }
