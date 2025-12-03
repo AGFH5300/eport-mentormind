@@ -1,11 +1,16 @@
-import { MessageWithUser } from '@shared/schema';
-import { UserAvatar } from './UserAvatar';
-import { format } from 'date-fns';
-import { useAuth } from '@/hooks/use-auth';
-import { cn } from '@/lib/utils';
-import { Clock, Check, CheckCheck, ChevronDown } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { MessageWithUser } from "@shared/schema";
+import { UserAvatar } from "./UserAvatar";
+import { format } from "date-fns";
+import { useAuth } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
+import { Clock, Check, CheckCheck, ChevronDown } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface MessageBubbleProps {
   message: MessageWithUser;
@@ -16,7 +21,13 @@ interface MessageBubbleProps {
 }
 
 
-export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar, hideHeader }: MessageBubbleProps) {
+export function MessageBubble({
+  message,
+  showAvatar = true,
+  onReply,
+  hideAvatar,
+  hideHeader,
+}: MessageBubbleProps) {
   const showAvatarFinal = showAvatar && !hideAvatar;
   const { user } = useAuth();
   const isOwn = message.user_id === user?.id;
@@ -24,7 +35,7 @@ export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar,
 
   const formatTime = (date: string | Date | null) => {
     if (!date) return '';
-    return format(new Date(date), 'HH:mm');
+    return format(new Date(date), "HH:mm");
   };
 
   const getStatusIcon = () => {
@@ -49,8 +60,8 @@ export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar,
   return (
     <div
       className={cn(
-        'flex gap-3 group',
-        isOwn ? 'justify-end' : 'justify-start'
+        "flex gap-3 group w-full",
+        isOwn ? "justify-end" : "justify-start"
       )}
       data-testid={`message-${message.id}`}
     >
@@ -66,9 +77,14 @@ export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar,
         )
       )}
       
-      <div className={cn('flex flex-col', isOwn ? 'items-end' : 'items-start')}>
+      <div
+        className={cn(
+          "flex flex-col max-w-[calc(100%-72px)]",
+          isOwn ? "items-end" : "items-start"
+        )}
+      >
         {!isOwn && !hideHeader && (
-          <div className="flex items-center gap-2 mb-1">
+          <div className="flex items-center gap-2 mb-1 text-muted-foreground">
             <span className="font-semibold text-foreground text-sm">
               {message.user.full_name}
             </span>
@@ -80,35 +96,35 @@ export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar,
 
         {/* Reply reference */}
         {message.reply_to_message && (
-          <div className="bg-border border-l-4 border-primary pl-3 py-2 mb-2 rounded max-w-xs">
-            <p className="text-sm text-muted-foreground">
-              <span className="font-medium">@{message.reply_to_message.user.username}</span>
-              {' '}
+          <div className="bg-muted/80 border border-border text-muted-foreground pl-3 pr-2 py-2 mb-2 rounded-xl max-w-md">
+            <p className="text-sm leading-relaxed">
+              <span className="font-medium text-foreground">
+                @{message.reply_to_message.user.username}
+              </span>{" "}
               {message.reply_to_message.content.length > 50
                 ? `${message.reply_to_message.content.substring(0, 50)}...`
-                : message.reply_to_message.content
-              }
+                : message.reply_to_message.content}
             </p>
           </div>
         )}
 
         <div
           className={cn(
-            'message-bubble relative pr-7 rounded-lg p-3 max-w-md break-words',
+            "relative rounded-2xl p-3 sm:p-4 max-w-xl break-words border shadow-sm",
             isOwn
-              ? 'bg-primary text-primary-foreground'
-              : 'bg-muted text-foreground'
+              ? "bg-primary/10 text-foreground border-primary/30"
+              : "bg-card text-foreground border-border"
           )}
         >
-          
-          <div className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition-opacity">
+
+          <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button
                   type="button"
                   className={cn(
-                    'w-6 h-6 rounded-md flex items-center justify-center bg-black/10 hover:bg-black/20',
-                    isOwn ? 'text-primary-foreground' : 'text-foreground'
+                    "w-7 h-7 rounded-full flex items-center justify-center bg-muted text-muted-foreground hover:text-foreground hover:bg-muted/80",
+                    isOwn ? "text-foreground" : "text-foreground"
                   )}
                   aria-label="Message actions"
                 >
@@ -135,16 +151,17 @@ export function MessageBubble({ message, showAvatar = true, onReply, hideAvatar,
             </DropdownMenu>
           </div>
 
-          <p>{message.content}</p>
-          
-          {isOwn && (
-            <div className="flex items-center justify-end gap-1 mt-[2px]">
-              <span className="text-[10px] opacity-70 flex items-center gap-[2px]">
-                {formatTime(message.created_at)}
-                {getStatusIcon()}
-              </span>
-            </div>
-          )}
+          <p className="leading-relaxed text-[15px] whitespace-pre-line">
+            {message.content}
+          </p>
+
+          <div className="flex items-center gap-2 mt-3 text-xs text-muted-foreground">
+            {!isOwn && <span>Mentor</span>}
+            <span className="flex items-center gap-1">
+              {formatTime(message.created_at)}
+              {isOwn && getStatusIcon()}
+            </span>
+          </div>
         </div>
       </div>
 
