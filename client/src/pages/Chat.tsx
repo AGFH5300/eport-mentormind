@@ -620,30 +620,67 @@ export default function Chat() {
       <MentorNavbar />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col gap-6 h-[calc(100vh-64px)]">
-        <div className="rounded-3xl bg-gradient-to-r from-primary/15 via-white to-accent/10 border border-border shadow-md p-6">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-2">
-              <p className="text-xs uppercase tracking-wide text-primary">
-                Mentorship hub
-              </p>
+        <div className="relative overflow-hidden rounded-[32px] border border-border/70 bg-card/80 p-6 shadow-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.18),_transparent_55%)]" />
+          <div className="absolute -right-10 -top-12 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-3 max-w-2xl">
+              <Badge variant="outline" className="uppercase tracking-[0.2em] text-xs">
+                Home dashboard
+              </Badge>
               <h1 className="text-3xl font-semibold leading-tight">
-                MentorMind – Alumni–Student Mentorship Hub
+                Your mentorship command center
               </h1>
-              <p className="text-muted-foreground max-w-2xl">
-                Connect with alumni mentors, plan your mentorship sessions, and keep every conversation focused on your goals.
+              <p className="text-muted-foreground">
+                Keep sessions moving, track alumni conversations, and surface the next steps that matter to you.
               </p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => setShowRequestMentorship(true)}>
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Request mentorship
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => setShowNotifications(true)}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  View notifications
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-3 flex-wrap">
-              <Card className="min-w-[160px] border-border/70 shadow-sm">
-                <CardContent className="p-4">
+            <div className="grid w-full gap-3 sm:grid-cols-2 lg:w-auto">
+              <Card className="min-w-[180px] border-border/70 shadow-sm bg-background/80">
+                <CardContent className="p-4 space-y-2">
                   <p className="text-xs text-muted-foreground">Active sessions</p>
                   <p className="text-2xl font-semibold">{rooms.length}</p>
+                  <p className="text-xs text-muted-foreground">Chats ready to join</p>
                 </CardContent>
               </Card>
-              <Card className="min-w-[160px] border-border/70 shadow-sm">
-                <CardContent className="p-4">
+              <Card className="min-w-[180px] border-border/70 shadow-sm bg-background/80">
+                <CardContent className="p-4 space-y-2">
                   <p className="text-xs text-muted-foreground">Mentorships</p>
                   <p className="text-2xl font-semibold">{mentorshipConnections.length}</p>
+                  <p className="text-xs text-muted-foreground">Active alumni matches</p>
+                </CardContent>
+              </Card>
+              <Card className="min-w-[180px] border-border/70 shadow-sm bg-background/80">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground">Pending invites</p>
+                  <p className="text-2xl font-semibold">{pendingRequests.length}</p>
+                  <p className="text-xs text-muted-foreground">Waiting your response</p>
+                </CardContent>
+              </Card>
+              <Card className="min-w-[180px] border-border/70 shadow-sm bg-background/80">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs text-muted-foreground">Unread messages</p>
+                  <p className="text-2xl font-semibold">
+                    {rooms.reduce(
+                      (total, room) => total + (room.unread_count || 0),
+                      0,
+                    )}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Across mentor rooms</p>
                 </CardContent>
               </Card>
             </div>

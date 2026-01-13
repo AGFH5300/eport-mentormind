@@ -82,30 +82,84 @@ export default function FindMentor() {
     <div className="min-h-screen bg-background text-foreground">
       <MentorNavbar />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        <div className="rounded-3xl bg-card shadow-sm border border-border/70 p-6 space-y-3">
-          <p className="text-xs uppercase tracking-[0.2em] text-primary">Find your mentor</p>
-          <h1 className="text-3xl font-semibold">Connect with alumni mentors</h1>
-          <p className="text-muted-foreground max-w-3xl">
-            Browse the mentor network, filter by field or university, and request mentorship with one click.
-          </p>
-          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between pt-2">
-            <Input
-              placeholder="Search by mentor name"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full md:w-80"
-            />
-            <div className="flex flex-wrap gap-2 text-sm">
-              {fields.map((field) => (
-                <Badge
-                  key={field}
-                  variant={fieldFilter === field ? "default" : "outline"}
-                  className="cursor-pointer rounded-full"
-                  onClick={() => setFieldFilter(fieldFilter === field ? null : field)}
-                >
-                  {field}
-                </Badge>
-              ))}
+        <div className="relative overflow-hidden rounded-[32px] border border-border/70 bg-card/80 p-6 shadow-xl">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(14,165,233,0.18),_transparent_60%)]" />
+          <div className="absolute -bottom-12 right-0 h-48 w-48 rounded-full bg-primary/10 blur-3xl" />
+          <div className="relative grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="space-y-4">
+              <Badge variant="outline" className="uppercase tracking-[0.2em] text-xs">
+                Mentor network
+              </Badge>
+              <h1 className="text-3xl font-semibold">Build your mentor match list</h1>
+              <p className="text-muted-foreground max-w-2xl">
+                Curate a shortlist of alumni mentors based on field, university, and the topics you want to explore next.
+              </p>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <Input
+                  placeholder="Search by mentor name"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full sm:w-80"
+                />
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {fields.map((field) => (
+                    <Badge
+                      key={field}
+                      variant={fieldFilter === field ? "default" : "outline"}
+                      className="cursor-pointer rounded-full"
+                      onClick={() => setFieldFilter(fieldFilter === field ? null : field)}
+                    >
+                      {field}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Card className="border-border/70 bg-background/80 shadow-sm">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Active filters
+                  </p>
+                  <p className="text-2xl font-semibold">
+                    {[fieldFilter, universityFilter, topicFilter].filter(Boolean).length}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Applied to your list</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/70 bg-background/80 shadow-sm">
+                <CardContent className="p-4 space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Mentor matches
+                  </p>
+                  <p className="text-2xl font-semibold">{filteredMentors.length}</p>
+                  <p className="text-xs text-muted-foreground">Profiles ready to request</p>
+                </CardContent>
+              </Card>
+              <Card className="border-border/70 bg-background/80 shadow-sm sm:col-span-2">
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                    Quick actions
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setFieldFilter(null);
+                        setUniversityFilter(null);
+                        setTopicFilter(null);
+                        setSearchTerm("");
+                      }}
+                    >
+                      Reset filters
+                    </Button>
+                    <Button variant="default" size="sm" className="rounded-full">
+                      Start mentorship request
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
@@ -145,19 +199,16 @@ export default function FindMentor() {
                 </div>
               </div>
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-foreground">Quick actions</p>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Button variant="outline" size="sm" onClick={() => {
-                    setFieldFilter(null);
-                    setUniversityFilter(null);
-                    setTopicFilter(null);
-                    setSearchTerm("");
-                  }}>
-                    Reset filters
-                  </Button>
-                  <Button variant="default" size="sm" className="rounded-full">
-                    Start mentorship request
-                  </Button>
+                <p className="text-sm font-semibold text-foreground">Focus picks</p>
+                <div className="flex flex-col gap-3">
+                  <div className="rounded-2xl border border-border/60 bg-muted/40 p-3 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Top request</p>
+                    <p className="font-semibold">Resume + application review</p>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 bg-muted/40 p-3 text-sm">
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">Trending field</p>
+                    <p className="font-semibold">Engineering & CS mentors</p>
+                  </div>
                 </div>
               </div>
             </div>
